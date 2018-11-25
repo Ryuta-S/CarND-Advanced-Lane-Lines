@@ -12,7 +12,7 @@ class WarpRegionMask:
     """
     This class is a class that holds parameters for changing views and region_of_interest.
     """
-    def __init__(self, src, dst, warped_size, vertices):
+    def __init__(self, src, dst, warped_size, vertices=np.array([[(0,800) ,(0, 0), (1200, 0), (1200, 800)]], dtype=np.int32)):
         """
         constructor
         @param src: Specify the position before changing the viewpoints
@@ -43,7 +43,7 @@ class WarpRegionMask:
         """
         Restore view
         @param warped_img: Image modified by birdsEye()
-        
+
         @return: Image before applying birdsEye()
         """
         M = cv2.getPerspectiveTransform(self.dst, self.src)
