@@ -5,6 +5,10 @@ import matplotlib.image as mpimg
 import os
 from pipeline import FindLane
 
+__author__ = 'ryutaShitomi'
+__version__ = '1.0'
+__date__ = '2018/10'
+
 
 
 find_lane = FindLane(ym_per_pix=30/720, xm_per_pix=3.7/700)

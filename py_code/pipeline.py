@@ -6,19 +6,43 @@ import glob
 from color_gradient import ColorGrad
 from warp_and_region_mask import WarpRegionMask
 
+__author__ = 'ryutaShitomi'
+__version__ = '1.0'
+__date__ = '2018/10'
+
 class FindLane:
+    """
+    Class with parameters to recognize lane and calculate curvature.
+    @data left_fit: Maintain coefficient of quadratic function representing left lane
+        If it is not None, execute self.search_around_poly () and find the pixel in the left lane of the next frame.
+    @data right_fit: Maintain coefficient of quadratic function representing right lane
+        If it is not None, execute self.search_around_poly () and find the pixel in the right lane of the next frame.
+    @data warp: warp should have the class 'WarpRegionMask'
+    @data color_grad: color_grad should have the class 'ColorGrad'
+    @data mtx,dist: The values used to correct camera distortion
+    """
     left_fit  = None
     right_fit = None
-    warp = None # warp should have the class 'WarpRegionMask'
-    color_grad = None  # color_grad should have the class 'ColorGrad'
+    warp = None
+    color_grad = None
     mtx = None
     dist = None
 
+
     def __init__(self, ym_per_pix, xm_per_pix):
+        """
+        constructor
+        @param ym_per_pix: Size of the metric in the y direction of the image relative to the pixel
+        @param xm_per_pix: Size of the metric in the x direction of the image relative to the pixel
+        """
         self.ym_per_pix = ym_per_pix
         self.xm_per_pix = xm_per_pix
 
+
     def findPoints(self):
+        """
+        Find chessboard points to calculate image distortion.
+        """
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
         objp = np.zeros((6*9,3), np.float32)
         objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
@@ -45,7 +69,12 @@ class FindLane:
 
         return objpoints, imgpoints, img
 
+
     def calcDistort(self):
+        """
+        Calculate camera distortion.
+        The value is held by the class and corrected for each frame.
+        """
         objpoints, imgpoints, img = self.findPoints()
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
@@ -54,24 +83,49 @@ class FindLane:
 
 
     def undistImage(self, img):
+        """
+        Correct image distortion of image.
+        @param img: Image to which will be corrected.
+
+        @return: Undistortion image.
+        """
         undist_image = cv2.undistort(img, self.mtx, self.dist, None, self.mtx)
         return undist_image
 
 
     def createColorGrad(self, color_space):
+        """
+        Create the class 'ColorGrad'.
+        Use pipeline().
+        """
         self.color_grad = ColorGrad(color_space)
 
+
     def createWarp(self, src, dst, warped_size, vertices):
+        """
+        Create the class WarpRegionMask.
+        Use pipeline().
+        """
         self.warp = WarpRegionMask(src, dst, warped_size, vertices)
 
 
     def fit_polynomial(self, binary_warped):
+        """
+        Calculate coefficients and curvature of the quadratic function
+        from the viewpoint converted binary image.
+        @param binary_warped: viewpoint converted binary image
+
+        @return out_img: An image in which the inside of the lane is painted green.
+        @return curverad: curvature
+        @return ideal_car_positionx: Value in the middle of the lane
+        """
         # Find our lane pixels first
         if (self.left_fit is None) | (self.right_fit is None):
             leftx, lefty, rightx, righty, out_img = self.find_lane_pixels(binary_warped)
             self.left_fit = np.polyfit(lefty, leftx, 2)
             self.right_fit = np.polyfit(righty, rightx, 2)
         else:
+            # If you calculated the lane in the previous frame, use search_around_poly ().
             leftx, lefty, rightx, righty, out_img = self.search_around_poly(binary_warped)
         ploty, left_fitx, right_fitx = self.generatePlotValue(binary_warped)
 
@@ -92,13 +146,28 @@ class FindLane:
         right_fit_cr = np.polyfit(ploty*self.ym_per_pix, right_fitx*self.xm_per_pix, 2)
         left_curverad, right_curverad  = self.measure_curvature_real(left_fit_cr, right_fit_cr, binary_warped.shape[0]*self.ym_per_pix)
         curverad = (left_curverad + right_curverad) / 2
-        car_positionx = (right_fitx[-1] - left_fitx[-1]) // 2 + left_fitx[-1]
+        ideal_car_positionx = (right_fitx[-1] - left_fitx[-1]) // 2 + left_fitx[-1]
 
 
-        return out_img, curverad, car_positionx
+        return out_img, curverad, ideal_car_positionx
 
 
     def find_lane_pixels(self, binary_warped):
+        """
+        Find lane pixels.
+        Add the images in the y direction and find the lane from that value.
+        @param binary_warped: viewpoint converted binary image
+
+        @return leftx: An element in the x direction representing the position
+                        of the left lane pixels in the image
+        @return lefty: An element in the y direction representing the position
+                        of the left lane pixels in the image
+        @return rightx: An element in the x derection representing the position
+                        of the right lane pixels in the image
+        @return righty: An element in the y direction representing the position
+                        of the right lane pixels in the image
+        @return out_img: image which is drawn the windows
+        """
         # Take a histogram of the bottom half of the image
         histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
         # Create an output image to draw on and visualize the result
@@ -182,6 +251,20 @@ class FindLane:
         return leftx, lefty, rightx, righty, out_img
 
     def search_around_poly(self, binary_warped):
+        """
+        By self.letf_fit and self.right_fit, find the pixel representing the lane.
+        @param binary_warped: viewpoint converted binary image
+
+        @return leftx: An element in the x direction representing the position
+                        of the left lane pixels in the image
+        @return lefty: An element in the y direction representing the position
+                        of the left lane pixels in the image
+        @return rightx: An element in the x derection representing the position
+                        of the right lane pixels in the image
+        @return righty: An element in the y direction representing the position
+                        of the right lane pixels in the image
+        @return out_img
+        """
         # HYPERPARAMETER
         # Choose the width of the margin around the previous polynomial to search
         margin = 80
@@ -211,8 +294,11 @@ class FindLane:
         return leftx, lefty, rightx, righty, out_img
 
 
-
     def generatePlotValue(self, binary_warped):
+        """
+        Generate plot value.
+        Create points to plot from coefficients of quadratic curve.
+        """
         # Generate x and y values for plotting
         ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
         try:
@@ -228,6 +314,9 @@ class FindLane:
 
 
     def measure_curvature_real(self, left_fit_cr, right_fit_cr, y_val):
+        """
+        Measure the real curvature.
+        """
         left_A = left_fit_cr[0]
         left_B = left_fit_cr[1]
         right_A = right_fit_cr[0]
@@ -238,12 +327,20 @@ class FindLane:
         return left_curverad, right_curverad
 
 
-    def calcDiffCarPosition(self, car_pos, center):
-        diff = car_pos - center
+    def calcDiffCarPosition(self, ideal_car_pos, real_car_pos):
+        """
+        Calculate how much the car's position deviates from the center of the lane.
+        @param ideal_car_pos: Ideal car location
+        @param real_car_pos: Real car location
+
+        @return pos: Which side of the lane is closest to?
+        @return meter_diff: How far is deviated from the ideal position
+        """
+        diff = ideal_car_pos - real_car_pos
         pos = 'center'
-        if car_pos < center:
+        if ideal_car_pos > real_car_pos:
             pos = 'left'
-        elif car_pos > center:
+        elif ideal_car_pos < real_car_pos:
             pos = 'right'
 
         meter_diff = np.absolute(diff * self.xm_per_pix)
@@ -251,6 +348,14 @@ class FindLane:
 
 
     def putTextInImage(self, img, curverad, meter_diff, pos):
+        """
+        Put text in the image.
+        @param img: Image which will be put text
+        @param curverad: carvature
+        @param meter_diff
+
+        @return out_img: Image which was put text.
+        """
         font = cv2.FONT_HERSHEY_DUPLEX
         font_size = 1
         out_img = np.copy(img)
@@ -263,6 +368,12 @@ class FindLane:
 
 
     def pipeline(self, img):
+        """
+        Pipeline processing to find a lane from an input image.
+        @param img: Image you want to find a lane.
+
+        @param out_image: Image which was found a lane.
+        """
         if self.warp is None:
             raise ValueError('create WarpRegionMask class using createWarp method')
         if self.color_grad is None:
@@ -271,15 +382,23 @@ class FindLane:
         if (self.dist is None) | (self.mtx is None):
             self.calcDistort()
 
+        # undistort image
         undist_img = self.undistImage(img)
+        # binarization
         color_binary, combined_binary = self.color_grad.colorGradPipeline(undist_img,
             auto_finding_saturation_thresh = True)
+        # region_of_interest
         region_binary = self.warp.region_of_interest(combined_binary)
+        # warp pespective
         warped_binary = self.warp.birdsEye(region_binary)
-        warped_line, curverad, car_posx = self.fit_polynomial(warped_binary)
-        pos, meter_diff = self.calcDiffCarPosition(car_posx, warped_binary.shape[1]/2)
+        # find lane
+        warped_line, curverad, ideal_car_posx = self.fit_polynomial(warped_binary)
+        # calculate car position
+        pos, meter_diff = self.calcDiffCarPosition(ideal_car_posx, warped_binary.shape[1]/2)
         warped_line = np.uint8(warped_line)
+        # return warp perspective
         backed_line = self.warp.returnBirdsEye(warped_line)
         out_image = cv2.addWeighted(img, 0.8, backed_line, 0.5, 0)
+        # put text 
         out_image = self.putTextInImage(out_image, curverad, meter_diff, pos)
         return out_image

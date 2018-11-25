@@ -1,3 +1,7 @@
+"""
+This is a program to recognize lane from video.
+"""
+
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
@@ -6,14 +10,21 @@ import numpy as np
 from pipeline import FindLane
 from time import sleep
 
+__author__ = 'ryutaShitomi'
+__version__ = '1.0'
+__date__ = '2018/10'
+
 
 ym_per_pix = 30/720
 xm_per_pix = 3.7/700
+# Create the class pipeline.FindLane.
 find_lane = FindLane(ym_per_pix=ym_per_pix, xm_per_pix=xm_per_pix)
 cap = cv2.VideoCapture('../test_videos/project_video.mp4')
+# get the image width, height and fps.
 width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 fps = cap.get(cv2.CAP_PROP_FPS)
+# Specify extension of video to save.
 fourcc = cv2.VideoWriter_fourcc(*'MP4V')
 print(fps, width, height)
 out = cv2.VideoWriter('../test_videos_output/project_video.mp4', fourcc, int(fps), (int(width), int(height)))
@@ -37,7 +48,9 @@ find_lane.createColorGrad('BGR')
 find_lane.createWarp(src, dst, warped_size, vertices)
 while end_flag == True:
     out_img = find_lane.pipeline(frame)
+    ## If you apply sliding window each frame, restore below comment ##
     #find_lane.left_fit = None
+
     # cv2.imshow('A', out_img)
     out.write(out_img)
     key = cv2.waitKey(3)

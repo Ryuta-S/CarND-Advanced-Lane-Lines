@@ -4,12 +4,38 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
 
+__author__ = 'ryutaShitomi'
+__version__ = '1.0'
+__date__ = '2018/10'
+
 class ColorGrad:
+    """
+    Class for recognizing lane lines by using color and gradient
+    """
 
     def __init__(self, color_space):
+        """
+        constructor
+        @param color_space: 'RGB' or 'BGR'
+            If you read image using matplotlib.image, you set 'RGB'.
+            If you read image using cv2, you set 'BGR'.
+        """
         self.color_space = color_space
 
+
     def absSobelThresh(self, img, orient='x', sobel_kernel=3, auto_finding_thresh = False, thresh=(0, 255)):
+        """
+        Apply a Sobel filter to the image
+        @param img: Image to which the Sobel filter  will be applied
+        @param orient: Orientation to which filter processing is applied
+        @param sobel_kernel: filter size
+        @param auto_finding_thresh: Whether to automatically find the threshold of the binarization process
+            True if you want to find it automatically
+        @param thresh: Specify threshold of binarization process
+            (low_thresh, high_thresh) specified
+
+        @return: Image after applying Sobel filter
+        """
         # Calculate directional gradient
         # convert image to grayscale
         if self.color_space == 'RGB':
@@ -17,8 +43,9 @@ class ColorGrad:
         elif self.color_space == 'BGR':
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         else:
-            raise ValueError("Incorrect parameter 'color_space'")
+            raise ValueError("Incorrect parameter 'color_space'. Set parameter 'color_space'.")
 
+        # Apply sobel
         if orient == 'x':
             sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
         elif orient == 'y':
@@ -26,6 +53,7 @@ class ColorGrad:
         else:
             raise ValueError("parameter 'orient' should be 'x' or 'y'")
 
+        # binarization
         abs_sobel = np.absolute(sobel)
         scaled_sobel = np.uint8(255*abs_sobel/np.max(abs_sobel))
         if auto_finding_thresh:
@@ -41,8 +69,20 @@ class ColorGrad:
 
 
     def magnitudeGradient(self, image, gray_or_r = 'gray', sobel_kernel=3, auto_finding_thresh = False, thresh=(0, 255)):
-        # Calculate gradient magnitude
-        # Apply threshold
+        """
+        Calculate gradient magnitude
+        @param image: Image to which will be calculated gradient magnitude
+        @param gray_or_r: Specifying an image for which gradient magnitude is calculated
+            If you want to calculate grayscale, specify 'gray'.
+            If you want to calculate r_channel, specify 'r'.
+        @param sobel_kernel: filter size
+        @param auto_finding_thresh: Whether to automatically find the threshold of the binarization process
+            True if you want to find it automatically.
+        @param thresh: Specify threshold of binarization process
+            (low_thresh, high_thresh) specified
+
+        @return: Image after binarization calculating gradient magnitude
+        """
 
         # 1) Convert to grayscale
         if gray_or_r == 'gray':
@@ -82,10 +122,22 @@ class ColorGrad:
 
 
     def directionGradient(self, image, gray_or_r = 'gray', sobel_kernel=3, auto_finding_thresh = False, thresh=(0, np.pi/2)):
-        # Calculate gradient direction
-        # Apply threshold
+        """
+        Calculate gradient direction.
+        @param image: Image to which will be calculated gradient direction
+        @param gray_or_r: Specifying an image for which gradient magnitude is calculated
+            If you want to calculate grayscale, specify 'gray'.
+            If you want to calculate r_channel, specify 'r'.
+        @param sobel_kernel: filter size
+        @param auto_finding_thresh: Whether to automatically find the threshold of the binarization process
+            True if you want to find it automatically.
+        @param thresh: Specify threshold of binarization process
+            (low_thresh, high_thresh) specified
 
-        # 1) Convert to grayscale
+        @return: Image after binarization calculating gradient direction
+        """
+
+        # 1) Convert to grayscale or r_channel
         if gray_or_r == 'gray':
             if self.color_space == 'RGB':
                 convertImage = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -161,6 +213,9 @@ class ColorGrad:
 
     # Edit this function to create your own pipeline.
     def colorGradPipeline(self, img, auto_finding_saturation_thresh = False, saturation_thresh=(170, 255)):
+        """
+        Pipeline processing to recognize lanes using saturation and gradient.
+        """
         copy_img = np.copy(img)
         # Convert to HLS color space and separate the V channel
         if self.color_space == 'RGB':

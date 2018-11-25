@@ -3,28 +3,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+__author__ = 'ryutaShitomi'
+__version__ = '1.0'
+__date__ = '2018/10'
 
 
 class WarpRegionMask:
+    """
+    This class is a class that holds parameters for changing views and region_of_interest.
+    """
     def __init__(self, src, dst, warped_size, vertices):
+        """
+        constructor
+        @param src: Specify the position before changing the viewpoints
+        @param dst: Specify the position after changing the viewpoints(associated with src)
+        @param warped_size: Size of image after changing view
+        @param vertices: Use with region_of_interest()
+        """
         self.src = src
         self.dst = dst
         self.warped_size = warped_size
         self.vertices = vertices
 
+
     def birdsEye(self, img):
+        """
+        Change view
+        @param img: Image before changing view
+
+        @return: Image after changing view
+        """
         M = cv2.getPerspectiveTransform(self.src, self.dst)
         self.backed_img_size = (img.shape[1], img.shape[0])
         warped = cv2.warpPerspective(img, M, self.warped_size, flags = cv2.INTER_LINEAR)
         return warped
 
+
     def returnBirdsEye(self, warped_img):
+        """
+        Restore view
+        @param warped_img: Image modified by birdsEye()
+        
+        @return: Image before applying birdsEye()
+        """
         M = cv2.getPerspectiveTransform(self.dst, self.src)
         return_img = cv2.warpPerspective(warped_img, M, self.backed_img_size, flags=cv2.INTER_LINEAR)
         return return_img
 
-    # draw the region on the basis of parameter 'src'
+
     def draw_region(self, img):
+        """
+        draw the region on the basis of parameter 'self.src'
+        """
         result = np.copy(img)
         for i in range(len(self.src)):
             result = cv2.line(result, tuple(self.src[i]), tuple(self.src[(i+1)%len(self.src)]), (255,0,0),2)
