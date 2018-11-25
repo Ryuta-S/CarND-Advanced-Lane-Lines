@@ -6,7 +6,7 @@ import os
 from find_lane import FindLane
 
 __author__ = 'ryutaShitomi'
-__version__ = '1.0'
+__version__ = '1.1'
 __date__ = '2018/10'
 
 
@@ -18,7 +18,7 @@ dst = np.float32([[900, 0], [900, 720], [320, 720], [320, 0]])
 src = np.float32([[685, 450], [1120, 720], [190, 720], [595, 450]])
 rows, cols, channel =720, 1280, 3
 height = rows
-# challenge
+## for challenge ##
 # vertices = np.array([[(200,rows) ,(650, 430), (750, 430), (1130, rows)]], dtype=np.int32)
 vertices = np.array([[(0,height) ,(0, 0), (1200, 0), (1200, height)]], dtype=np.int32)
 warped_size = (cols, rows)
@@ -32,16 +32,16 @@ find_lane.createColorGrad(color_space='RGB')
 # plt.show()
 
 
-# for im_name in os.listdir('../test_images'):
-#     path = os.path.join('../test_images', im_name)
-#     img = mpimg.imread(path)
-#     print(img.shape)
-#     find_lane.left_fit = None
-#     find_lane.right_fit = None
-#     out_img = find_lane.pipeline(img)
-#     res = find_lane.warp.draw_region(img)
-#     plt.figure(figsize=(12, 8))
-#     plt.imshow(res)
-#     plt.show()
-#     save_path = os.path.join('../test_images_output', im_name)
-#     plt.imsave(save_path, out_img)
+for im_name in os.listdir('../test_images'):
+    path = os.path.join('../test_images', im_name)
+    img = mpimg.imread(path)
+    print(img.shape)
+    find_lane.left_fit = None
+    find_lane.right_fit = None
+    out_img = find_lane.pipeline(img)
+    res = find_lane.warp.draw_region(img)
+    plt.figure(figsize=(12, 8))
+    plt.imshow(res)
+    plt.show()
+    save_path = os.path.join('../test_images_output', im_name)
+    plt.imsave(save_path, out_img)
