@@ -7,7 +7,7 @@ import matplotlib.image as mpimg
 import os
 import cv2
 import numpy as np
-from pipeline import FindLane
+from find_lane import FindLane
 from time import sleep
 
 __author__ = 'ryutaShitomi'

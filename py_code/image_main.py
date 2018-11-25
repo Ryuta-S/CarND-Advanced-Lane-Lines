@@ -3,7 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
-from pipeline import FindLane
+from find_lane import FindLane
 
 __author__ = 'ryutaShitomi'
 __version__ = '1.0'
