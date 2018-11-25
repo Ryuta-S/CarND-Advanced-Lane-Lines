@@ -51,7 +51,7 @@ class WarpRegionMask:
         return return_img
 
 
-    def draw_region(self, img):
+    def drawRegion(self, img):
         """
         draw the region on the basis of parameter 'self.src'
         """
@@ -60,7 +60,7 @@ class WarpRegionMask:
             result = cv2.line(result, tuple(self.src[i]), tuple(self.src[(i+1)%len(self.src)]), (255,0,0),2)
         return result
 
-    def region_of_interest(self, img):
+    def regionOfInterest(self, img):
         """
         Applies an image mask.
 
