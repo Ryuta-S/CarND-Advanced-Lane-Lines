@@ -20,6 +20,7 @@ class FindLane:
     @data warp: warp should have the class 'WarpRegionMask'
     @data color_grad: color_grad should have the class 'ColorGrad'
     @data mtx,dist: The values used to correct camera distortion
+    @date count:
     """
     left_fit  = None
     right_fit = None
@@ -27,6 +28,7 @@ class FindLane:
     color_grad = None
     mtx = None
     dist = None
+    count = 0
 
 
     def __init__(self, ym_per_pix, xm_per_pix):
@@ -120,13 +122,14 @@ class FindLane:
         @return ideal_car_positionx: Value in the middle of the lane
         """
         # Find our lane pixels first
-        if (self.left_fit is None) | (self.right_fit is None):
+        if (self.left_fit is None) | (self.right_fit is None) | (self.count % 10 == 0):
             leftx, lefty, rightx, righty, out_img = self.find_lane_pixels(binary_warped)
             self.left_fit = np.polyfit(lefty, leftx, 2)
             self.right_fit = np.polyfit(righty, rightx, 2)
         else:
             # If you calculated the lane in the previous frame, use search_around_poly ().
             leftx, lefty, rightx, righty, out_img = self.search_around_poly(binary_warped)
+        self.count += 1
         ploty, left_fitx, right_fitx = self.generatePlotValue(binary_warped)
 
 
@@ -170,6 +173,9 @@ class FindLane:
         """
         # Take a histogram of the bottom half of the image
         histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
+        ## Histogram for challenge ##
+        # histogram = np.sum(binary_warped[binary_warped.shape[0]//3:, :], axis=0)
+
         # Create an output image to draw on and visualize the result
         out_img = np.dstack((binary_warped, binary_warped, binary_warped))
         # Find the peak of the left and right halves of the histogram
@@ -180,7 +186,7 @@ class FindLane:
 
         # HYPERPARAMETERS
         # Choose the number of sliding windows
-        nwindows = 9
+        nwindows = 10
         # Set the width of the windows +/- margin
         margin = 100
         # Set minimum number of pixels found to recenter window
@@ -399,6 +405,6 @@ class FindLane:
         # return warp perspective
         backed_line = self.warp.returnBirdsEye(warped_line)
         out_image = cv2.addWeighted(img, 0.8, backed_line, 0.5, 0)
-        # put text 
+        # put text
         out_image = self.putTextInImage(out_image, curverad, meter_diff, pos)
         return out_image
