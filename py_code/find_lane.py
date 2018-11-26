@@ -327,8 +327,8 @@ class FindLane:
         left_B = left_fit_cr[1]
         right_A = right_fit_cr[0]
         right_B = right_fit_cr[1]
-        left_curverad = ((1+(2*left_A*y_val+left_B)**2)++(1.5))/abs(2*left_A)
-        right_curverad = ((1+(2*right_A*y_val+right_B)**2)++(1.5))/abs(2*right_A)
+        left_curverad = ((1+(2*left_A*y_val+left_B)**2)**(1.5))/abs(2*left_A)
+        right_curverad = ((1+(2*right_A*y_val+right_B)**2)**(1.5))/abs(2*right_A)
 
         return left_curverad, right_curverad
 
