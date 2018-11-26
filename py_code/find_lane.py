@@ -394,7 +394,7 @@ class FindLane:
         color_binary, combined_binary = self.color_grad.colorGradPipeline(undist_img,
             auto_finding_saturation_thresh = True)
         # region_of_interest
-        region_binary = self.warp.region_of_interest(combined_binary)
+        region_binary = self.warp.regionOfInterest(combined_binary)
         # warp pespective
         warped_binary = self.warp.birdsEye(region_binary)
         # find lane
