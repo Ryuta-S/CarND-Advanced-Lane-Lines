@@ -7,7 +7,7 @@ from color_gradient import ColorGrad
 from warp_and_region_mask import WarpRegionMask
 
 __author__ = 'ryutaShitomi'
-__version__ = '1.0'
+__version__ = '1.1'
 __date__ = '2018/10'
 
 class FindLane:
@@ -39,6 +39,7 @@ class FindLane:
         """
         self.ym_per_pix = ym_per_pix
         self.xm_per_pix = xm_per_pix
+        self.calcDistort()
 
 
     def findPoints(self):
@@ -139,10 +140,16 @@ class FindLane:
         # Plots the left and right polynomials on the lane lines
         # plt.plot(left_fitx, ploty, color='yellow')
         # plt.plot(right_fitx, ploty, color='yellow')
-        for i in range(len(ploty)):
-            out_img[i, int(left_fitx[i]):int(right_fitx[i])] = [0, 255, 0]
+        ploty = ploty.astype(np.int)
+        left_fitx = left_fitx.astype(np.int)
+        right_fitx = right_fitx.astype(np.int)
+
         out_img[lefty, leftx] = [255, 0, 0]
         out_img[righty, rightx] = [0, 0, 255]
+        for i in range(len(ploty)):
+            out_img[i, int(left_fitx[i]):int(right_fitx[i])] = [0, 255, 0]
+            cv2.circle(out_img, (left_fitx[i], i), 5, (0, 255, 255))
+            cv2.circle(out_img, (right_fitx[i], i), 5, (0, 255, 255))
 
 
         left_fit_cr = np.polyfit(ploty*self.ym_per_pix, left_fitx*self.xm_per_pix, 2)
@@ -178,6 +185,7 @@ class FindLane:
 
         # Create an output image to draw on and visualize the result
         out_img = np.dstack((binary_warped, binary_warped, binary_warped))
+        out_img = out_img * 255
         # Find the peak of the left and right halves of the histogram
         # These will be the starting point for the left and right lines
         midpoint = np.int(histogram.shape[0]//2)
@@ -373,7 +381,7 @@ class FindLane:
 
 
 
-    def pipeline(self, img):
+    def pipeline(self, img, visualize=False):
         """
         Pipeline processing to find a lane from an input image.
         @param img: Image you want to find a lane.
@@ -404,7 +412,32 @@ class FindLane:
         warped_line = np.uint8(warped_line)
         # return warp perspective
         backed_line = self.warp.returnBirdsEye(warped_line)
-        out_image = cv2.addWeighted(img, 0.8, backed_line, 0.5, 0)
+        out_image = cv2.addWeighted(undist_img, 0.8, backed_line, 0.5, 0)
         # put text
         out_image = self.putTextInImage(out_image, curverad, meter_diff, pos)
+
+        if visualize:
+            height = undist_img.shape[0]
+            width = undist_img.shape[1]
+            resize=(width//3+1, height//3)
+            warp_raw_img = cv2.resize(self.warp.birdsEye(img), resize)
+            color_binary = color_binary.astype(np.uint8)
+            warp_grad = cv2.resize(self.warp.birdsEye(color_binary), resize)
+            raw_img = cv2.resize(undist_img, (width//3, height//3))
+            grad_img = cv2.resize(color_binary, resize)
+            saturation = cv2.cvtColor(undist_img, cv2.COLOR_RGB2HLS)[:,:,2]
+            if self.color_grad.color_space == 'BGR':
+                grad_img = cv2.cvtColor(grad_img, cv2.COLOR_RGB2BGR)
+                warp_grad = cv2.cvtColor(warp_grad, cv2.COLOR_RGB2BGR)
+                saturation = cv2.cvtColor(undist_img, cv2.COLOR_BGR2HLS)[:,:, 2]
+            saturation_3channel = np.dstack((saturation, saturation, saturation))
+            raw_img = cv2.resize(saturation_3channel, (width//3, height//3))
+            warp_poly = cv2.resize(warped_line, resize)
+            resize_out = cv2.resize(out_image, (width//3*2+1, height//3*2))
+            raw_and_grad = np.hstack((raw_img, grad_img))
+            out_and_raw = np.vstack((resize_out, raw_and_grad))
+            out_warp_combo = np.vstack((warp_raw_img, warp_grad, warp_poly))
+            out_image = np.hstack((out_and_raw, out_warp_combo))
+
+
         return out_image

@@ -19,7 +19,8 @@ ym_per_pix = 30/720
 xm_per_pix = 3.7/700
 # Create the class pipeline.FindLane.
 find_lane = FindLane(ym_per_pix=ym_per_pix, xm_per_pix=xm_per_pix)
-cap = cv2.VideoCapture('../test_videos/harder_challenge_video.mp4')
+video_path = '../test_videos/harder_challenge_video.mp4'
+cap = cv2.VideoCapture(video_path)
 # get the image width, height and fps.
 width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -27,7 +28,8 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 # Specify extension of video to save.
 fourcc = cv2.VideoWriter_fourcc(*'MP4V')
 print(fps, width, height)
-out = cv2.VideoWriter('../test_videos_output/harder_challenge_video.mp4', fourcc, int(fps), (int(width), int(height)))
+output_path = '../test_videos_output/analyze_' + os.path.basename(video_path)
+out = cv2.VideoWriter(output_path, fourcc, int(fps), (int(width), int(height)))
 end_flag, frame = cap.read()
 ESC_KEY = 27
 count = 0
@@ -58,7 +60,7 @@ find_lane.createWarp(src, dst, warped_size, vertices)
 
 
 while end_flag == True:
-    out_img = find_lane.pipeline(frame)
+    out_img = find_lane.pipeline(frame, True)
     ## If you apply sliding window each frame, restore below comment ##
     # find_lane.left_fit = None
 

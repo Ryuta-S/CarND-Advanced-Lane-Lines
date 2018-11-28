@@ -5,7 +5,7 @@ import matplotlib.image as mpimg
 import os
 
 __author__ = 'ryutaShitomi'
-__version__ = '1.0'
+__version__ = '1.1'
 __date__ = '2018/10'
 
 class ColorGrad:
@@ -253,6 +253,15 @@ class ColorGrad:
         yellow_binary = cv2.inRange(hsv, lower_yellow, upper_yellow)
         half_r = r_channel[r_channel.shape[0]//2:, :]
         mean = np.percentile(half_r.ravel(), 25)
+
+        # remove black color arae
+        # if self.color_space == 'RGB':
+        #     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        # else :
+        #     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # half_gray = gray[gray.shape[0]//3*2:,:]
+        # mean = np.percentile(half_gray.ravel(), 25)
+        # combined[gray <= mean] = 0
         # Stack each channel
         color_binary = np.dstack(( np.zeros_like(combined), combined, s_binary)) * 255
         combined_img = np.copy(img)
