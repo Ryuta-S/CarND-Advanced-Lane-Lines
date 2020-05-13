@@ -9,17 +9,28 @@ import cv2
 import numpy as np
 from find_lane import FindLane
 from time import sleep
+import argparse
 
 __author__ = 'ryutaShitomi'
 __version__ = '1.0'
 __date__ = '2018/10'
 
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-p',"--path",
+                    default=os.path.join(os.pardir, 'test_videos', 'harder_challenge_video.mp4'),
+                    help="video path")
+parser.add_argument('-o', '--output',
+                    default=os.path.join(os.pardir, 'test_videos_output', 'output.mp4'),
+                    help='output path')
+args = parser.parse_args()
+
 ym_per_pix = 30/720
 xm_per_pix = 3.7/700
 # Create the class pipeline.FindLane.
 find_lane = FindLane(ym_per_pix=ym_per_pix, xm_per_pix=xm_per_pix)
-video_path = '../test_videos/harder_challenge_video.mp4'
+video_path = args.path
 cap = cv2.VideoCapture(video_path)
 # get the image width, height and fps.
 width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -28,7 +39,8 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 # Specify extension of video to save.
 fourcc = cv2.VideoWriter_fourcc(*'MP4V')
 print(fps, width, height)
-output_path = '../test_videos_output/analyze_' + os.path.basename(video_path)
+# output_path = '../test_videos_output/analyze_' + os.path.basename(video_path)
+output_path = args.output
 out = cv2.VideoWriter(output_path, fourcc, int(fps), (int(width), int(height)))
 end_flag, frame = cap.read()
 ESC_KEY = 27
